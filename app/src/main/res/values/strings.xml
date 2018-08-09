@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+    <string name="highest_rated">Top Rated</string>
+    <string name="most_popular">Newest</string>
+    <string name="base_image_url">http://image.tmdb.org/t/p/</string>
+    <string name="image_size">w185</string>
+
+    <string name="color_background">color background</string>
+    <string name="poster_thumbnail">movie poster thumbnail</string>
+    <string name="release_date_label">Release Date</string>
+    <string name="vote_average_label">Vote Average</string>
+</resources>
