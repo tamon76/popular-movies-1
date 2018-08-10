@@ -3,6 +3,8 @@ package com.example.android.popularmovies.utils;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.example.android.popularmovies.BuildConfig;
 import  com.example.android.popularmovies.model.Movie;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,7 +20,8 @@ import java.nio.charset.Charset;
 
 public class JsonUtils {
 
-    private static final String API_KEY = "";
+    private static final String BASE_URL = "https://api.themoviedb.org/3/movie/";
+    private static final String API_KEY = BuildConfig.API_KEY;
     private static final String LOG_TAG = JsonUtils.class.getSimpleName();
 
     public static Movie[] fetchMovies(String sort) {
@@ -34,14 +37,11 @@ public class JsonUtils {
     }
 
     private static URL getSortedUrl(String sortOrder) {
-        final String BASE_URL = "http://api.themoviedb.org/3/discover/movie/";
-        final String SORT_BY_PARAM = "sort_by";
-        final String API_KEY_PARAM = "api_key";
-
         try {
-            Uri builtUri = Uri.parse(BASE_URL).buildUpon()
-                    .appendQueryParameter(SORT_BY_PARAM, sortOrder)
-                    .appendQueryParameter(API_KEY_PARAM, API_KEY)
+            Uri builtUri = Uri.parse(BASE_URL)
+                    .buildUpon()
+                    .appendPath(sortOrder)
+                    .appendQueryParameter("api_key", API_KEY)
                     .build();
 
             return new URL(builtUri.toString());

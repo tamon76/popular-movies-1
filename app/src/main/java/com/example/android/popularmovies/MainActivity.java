@@ -1,27 +1,32 @@
 package com.example.android.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.android.popularmovies.model.Movie;
-import com.example.android.popularmovies.utils.JsonUtils;
+import com.example.android.popularmovies.utils.OnTaskCompleted;
+import com.example.android.popularmovies.utils.MovieAsyncTask;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.ItemClickListener {
+public class MainActivity extends AppCompatActivity implements OnTaskCompleted, MovieAdapter.ItemClickListener {
 
     private RecyclerView mRecyclerView;
     private Movie[] mMovies = null;
     private Menu mMenu;
 
-    private static final String SORT_POPULAR = "popularity.desc";
-    private static final String SORT_RATING = "vote_average.desc";
+    private static final String SORT_POPULAR = "popular";
+    private static final String SORT_RATING = "top_rated";
     private static final String BASE_URL = "http://api.themoviedb.org/3/movie/";
 
     private String sortBy = SORT_POPULAR;
@@ -35,28 +40,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Item
         mRecyclerView = findViewById(R.id.movies_rv);
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        MovieAsyncTask task = new MovieAsyncTask();
-        task.execute(BASE_URL);
-    }
-
-    private class MovieAsyncTask extends AsyncTask<String, Void, Movie[]> {
-        @Override
-        protected Movie[] doInBackground(String... urls) {
-            if ((urls.length < 1) || urls[0] == null) {
-                return null;
-            }
-            return JsonUtils.fetchMovies(sortBy);
-        }
-
-        @Override
-        protected void onPostExecute(Movie[] movies) {
-            mRecyclerView.setVisibility(View.VISIBLE);
-            mMovies = movies;
-            MovieAdapter mMovieAdapter;
-            mMovieAdapter = new MovieAdapter(MainActivity.this, mMovies);
-            mMovieAdapter.setClickListener(MainActivity.this);
-            mRecyclerView.setAdapter(mMovieAdapter);
-        }
+        checkConnection();
     }
 
     private void startDetailActivity(Movie movie) {
@@ -78,13 +62,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Item
             case SORT_POPULAR:
                 sortBy = SORT_RATING;
                 updateMenu();
-                new MovieAsyncTask().execute(BASE_URL);
+                checkConnection();
                 break;
 
             case SORT_RATING:
                 sortBy = SORT_POPULAR;
                 updateMenu();
-                new MovieAsyncTask().execute(BASE_URL);
+                checkConnection();
                 break;
 
             default:
@@ -105,5 +89,32 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Item
 
     public void onItemClick(int position) {
         startDetailActivity(mMovies[position]);
+    }
+
+    private void checkConnection() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+
+        boolean isConnected = ((activeNetwork != null) && (activeNetwork.isConnectedOrConnecting()));
+
+        if (isConnected) {
+            MovieAsyncTask task = new MovieAsyncTask(this, sortBy);
+            task.execute(BASE_URL);
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), R.string.network_unavailable, Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        }
+    }
+
+    @Override
+    public void onTaskCompleted(Movie[] movies) {
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mMovies = movies;
+        MovieAdapter mMovieAdapter;
+        mMovieAdapter = new MovieAdapter(MainActivity.this, mMovies);
+        mMovieAdapter.setClickListener(MainActivity.this);
+        mRecyclerView.setAdapter(mMovieAdapter);
+
     }
 }
